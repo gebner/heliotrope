@@ -122,6 +122,16 @@ class Message
         head = content[0, 1000].split "\n"
         head.shift while !head.empty? && head.first.empty? || head.first =~ /^\s*>|\-\-\-|(wrote|said):\s*$/
         snippet = head.join(" ").gsub(/^\s+/, "").gsub(/\s+/, " ")[0, 100]
+
+	unless Decoder.in_ruby19_hell?  # Ruby 1.8 string ranges are not UTF-8 aware
+	  # snippet can end in the middle of a UTF-8 character, so remove it if necessary
+	  snippet.reverse.each_byte do |b|
+	    break if (b >> 7) == 0
+	    snippet.chop!
+	    break if (b >> 6) == 3
+	  end
+	end
+
         return snippet
       end
     end
